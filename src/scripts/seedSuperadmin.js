@@ -21,6 +21,7 @@ const seedSuperadmin = async () => {
       schoolEmail: process.env.SUPERADMIN_SCHOOL_EMAIL || process.env.SUPERADMIN_EMAIL || 'superadmin@example.com',
       password: process.env.SUPERADMIN_PASSWORD || 'admin123456',
       dateOfBirth: process.env.SUPERADMIN_DOB || '1990-01-01',
+      universityName: process.env.SUPERADMIN_UNIVERSITY || 'University Not Specified',
       role: 'superadmin',
       status: 'active',
       isVerified: true, // Superadmin is auto-verified
