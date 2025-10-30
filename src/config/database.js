@@ -25,10 +25,17 @@ const initializeDatabase = async () => {
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
 
-    // Run migrations for existing tables first (handles new columns gracefully)
+    // Register models and associations
+    require('../models');
+
+    // 1) Ensure base tables exist first to prevent ALTER errors on fresh DBs
+    await sequelize.sync({ force: false, alter: false });
+    console.log('✅ Base tables ensured (created if not existing).');
+
+    // 2) Run idempotent migrations to evolve schema safely
     const migrateUserModel = require('../scripts/migrateUserModel');
     await migrateUserModel();
-    
+
     const migrateNewsModel = require('../scripts/migrateNewsModel');
     await migrateNewsModel();
 
@@ -38,16 +45,9 @@ const initializeDatabase = async () => {
     const removePersonalEmail = require('../scripts/removePersonalEmail');
     await removePersonalEmail();
 
-    // Sync all models - this will create tables if they don't exist
-    // force: false means it won't drop existing tables
-    // alter: false to avoid conflicts after manual migration
-    await sequelize.sync({ 
-      force: false, 
-      alter: false 
-    });
-    console.log('✅ All models synchronized successfully.');
+    console.log('✅ Migrations executed successfully.');
 
-    // Seed superadmin if it doesn't exist (import here to avoid circular dependency)
+    // 3) Seed superadmin if it doesn't exist
     const seedSuperadmin = require('../scripts/seedSuperadmin');
     await seedSuperadmin();
   } catch (error) {

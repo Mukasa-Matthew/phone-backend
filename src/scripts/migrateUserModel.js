@@ -4,6 +4,18 @@ const { QueryTypes } = require('sequelize');
 // Migrate existing users table to add new required fields
 const migrateUserModel = async () => {
   try {
+    // Ensure users table exists before attempting ALTER operations
+    const tableCheck = await sequelize.query(
+      `SELECT to_regclass('public.users') AS exists`,
+      { type: QueryTypes.SELECT }
+    );
+
+    const tableExists = tableCheck?.[0]?.exists !== null;
+
+    if (!tableExists) {
+      console.log('ℹ️  users table does not exist yet. Base sync will create it. Skipping column migrations.');
+      return;
+    }
     // Check if username column exists
     const usernameCheck = await sequelize.query(
       `SELECT column_name 
