@@ -26,11 +26,29 @@ const parseOrigins = (value) => {
     .filter(Boolean);
 };
 
-const allowedOrigins = parseOrigins(process.env.CORS_ORIGIN) || (isProd ? [] : ['http://localhost:5173', 'http://localhost:3000']);
+const allowedOrigins = parseOrigins(process.env.CORS_ORIGIN) || (isProd ? [] : ['http://localhost:5173', 'https://campusconnecting.netlify.app/']);
+
+// Build a flexible CORS origin matcher supporting wildcards like *.netlify.app
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // same-origin or non-browser request
+  if (!allowedOrigins || allowedOrigins.length === 0) return false;
+  if (allowedOrigins.includes(origin)) return true;
+  // Support entries like *.netlify.app
+  for (const entry of allowedOrigins) {
+    if (entry.startsWith('*.')) {
+      const suffix = entry.slice(1); // remove leading '*'
+      if (origin.endsWith(suffix)) return true;
+    }
+  }
+  return false;
+};
 
 // CORS configuration (must be early)
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -43,7 +61,7 @@ const staticMiddleware = express.static(path.join(__dirname, '../uploads'));
 app.use('/uploads', (req, res, next) => {
   // Set CORS headers for static files
   const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
+  if (origin && isOriginAllowed(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
   } else if (!isProd) {
