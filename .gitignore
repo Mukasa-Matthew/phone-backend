@@ -1,0 +1,16 @@
+﻿# Exclude frontend web app
+frontend/
+
+# Dependencies and build artifacts
+node_modules/
+dist/
+
+# Logs and OS junk
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Exclude uploaded files from repo
+uploads/**
+!uploads/.gitkeep
